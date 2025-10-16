@@ -1,6 +1,7 @@
 // combat.js
 // Realistic-lite fight engine (stamina + momentum + mini-commentary)
 // + injury penalties, post-fight aggravation, and a tasteful intro card.
+// + Player reputation scoring for wins/losses.
 // API is stable: fight(a, b, fightingStyleName) -> { winner, loser }
 
 import { fightingStyles, getRelationship } from "./characters.js";
@@ -8,9 +9,11 @@ import {
   appendMessage,
   getRandomInt,
   injuryPerfMult,
-  maybeAggravateInjury
+  maybeAggravateInjury,
+  modifyReputation
 } from "./utilities.js";
 import { renderEventCard } from "./uiDecor.js";
+import { simulationState } from "./simulationCore.js";
 
 // --- TUNABLE KNOBS (keep it simple) -----------------------------------------
 const ROUNDS = 5;                // number of mini-rounds in an AP fight
@@ -184,6 +187,13 @@ export function fight(character1, character2, fightingStyleName) {
   // ── Injury lifecycle hook: fighting while hurt may worsen it ──
   maybeAggravateInjury(character1);
   maybeAggravateInjury(character2);
+
+  // ── Player reputation update (winner +5 / loser -3) ────────────
+  const me = simulationState.playerCharacter;
+  if (me) {
+    if (winner.name === me.name) modifyReputation(+5, "Fight victory");
+    else if (loser.name === me.name) modifyReputation(-3, "Fight defeat");
+  }
 
   return { winner, loser };
 }
