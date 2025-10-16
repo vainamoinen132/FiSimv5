@@ -7,7 +7,8 @@ import {
   removeMenu,
   clearOutput,
   evaluateFightProposal,
-  updateMoneyDisplay
+  updateMoneyDisplay,
+  isInjured
 } from "./utilities.js";
 import { characterPics } from "./characterManager.js";
 import { fight } from "./combat.js";
@@ -179,7 +180,6 @@ export function displayInteractMenu() {
 
   let selectedTarget = null;
 
-  // Build grid
   const targetGrid = document.createElement("div");
   targetGrid.id = "targetGrid";
   targetGrid.className = "character-grid";
@@ -205,7 +205,6 @@ export function displayInteractMenu() {
     targetGrid.appendChild(card);
   });
 
-  // Robust event delegation — click anywhere inside the card
   targetGrid.addEventListener("click", (e) => {
     const card = e.target.closest(".grid-item");
     if (!card) return;
@@ -214,7 +213,6 @@ export function displayInteractMenu() {
     card.classList.add("selected");
   });
 
-  // Keyboard support
   targetGrid.addEventListener("keydown", (e) => {
     if (e.key !== "Enter" && e.key !== " ") return;
     const card = e.target.closest(".grid-item");
@@ -227,7 +225,6 @@ export function displayInteractMenu() {
 
   interactDiv.appendChild(targetGrid);
 
-  // Action picker
   const actionLabel = document.createElement("label");
   actionLabel.innerText = "Choose action:";
   interactDiv.appendChild(actionLabel);
@@ -251,7 +248,6 @@ export function displayInteractMenu() {
   });
   interactDiv.appendChild(actionSelect);
 
-  // Style selector shown only for fight proposals
   const styleSelect = document.createElement("select");
   styleSelect.id = "fightingStyleSelect";
   Object.keys(window.fightingStyles).forEach(style => {
@@ -316,6 +312,17 @@ export function displayInteractMenu() {
         break;
       }
       case "Propose to Fight": {
+        // NEW: warn if either is injured
+        const meInj  = isInjured(simulationState.playerCharacter);
+        const themInj= isInjured(target);
+        if (meInj || themInj) {
+          appendMessage(
+            `<em>Caution:</em> ${meInj ? "You" : ""}${meInj && themInj ? " & " : ""}${themInj ? target.name : ""} ` +
+            ` ${meInj || themInj ? "are" : "is"} injured — performance will drop and injuries may worsen.`,
+            "event-warning"
+          );
+        }
+
         if (evaluateFightProposal(target, simulationState.playerCharacter)) {
           const res = fight(simulationState.playerCharacter, target, styleSelect.value);
           outcomeText = res
@@ -356,21 +363,13 @@ export function displayInteractMenu() {
         let rejectionHit = -2;
 
         if (relVal < REL_THRESHOLDS.FRIEND.min) {
-          successP = 0.10;
-          deltaMin = 3; deltaMax = 6;
-          rejectionHit = -3;
+          successP = 0.10; deltaMin = 3; deltaMax = 6; rejectionHit = -3;
         } else if (relVal < REL_THRESHOLDS.BEST_FRIEND.min) {
-          successP = 0.45;
-          deltaMin = 5; deltaMax = 9;
-          rejectionHit = -2;
+          successP = 0.45; deltaMin = 5; deltaMax = 9; rejectionHit = -2;
         } else if (relVal < REL_THRESHOLDS.LOVER.min) {
-          successP = 0.70;
-          deltaMin = 6; deltaMax = 12;
-          rejectionHit = -1;
+          successP = 0.70; deltaMin = 6; deltaMax = 12; rejectionHit = -1;
         } else {
-          successP = 0.90;
-          deltaMin = 7; deltaMax = 13;
-          rejectionHit = 0;
+          successP = 0.90; deltaMin = 7; deltaMax = 13; rejectionHit = 0;
         }
 
         if (Math.random() < successP) {
@@ -458,6 +457,11 @@ export function displayViewInfo() {
     Object.entries(c.fighting_attributes).forEach(([attr, val]) => {
       html += `<p>${attr}: ${val}</p>`;
     });
+
+    // Show injury if any
+    if (c.injury && c.injury.daysRemaining > 0) {
+      html += `<p><strong>Injury:</strong> ${c.injury.severity}, ${c.injury.daysRemaining} day(s) remaining.</p>`;
+    }
 
     html += "<h6>Relationships:</h6>";
     simulationState.currentCharacters.forEach(other => {
