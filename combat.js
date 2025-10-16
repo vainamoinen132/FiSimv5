@@ -1,17 +1,24 @@
 // combat.js
 // Realistic-lite fight engine (stamina + momentum + mini-commentary)
+// + injury penalties, post-fight aggravation, and a tasteful intro card.
 // API is stable: fight(a, b, fightingStyleName) -> { winner, loser }
 
 import { fightingStyles, getRelationship } from "./characters.js";
-import { appendMessage, getRandomInt } from "./utilities.js";
+import {
+  appendMessage,
+  getRandomInt,
+  injuryPerfMult,
+  maybeAggravateInjury
+} from "./utilities.js";
+import { renderEventCard } from "./uiDecor.js";
 
 // --- TUNABLE KNOBS (keep it simple) -----------------------------------------
-const ROUNDS = 5;              // number of mini-rounds in an AP fight
-const BASE_RANDOM = 8;         // randomness per round
-const MOMENTUM_STEP = 0.6;     // how much momentum shifts per clear round
-const MOMENTUM_CAP = 2.0;      // cap on momentum effect
-const STAMINA_DRAIN_BASE = 9;  // stamina drain baseline / round
-const STAMINA_DRAIN_VAR  = 5;  // variation in drain
+const ROUNDS = 5;                // number of mini-rounds in an AP fight
+const BASE_RANDOM = 8;           // randomness per round
+const MOMENTUM_STEP = 0.6;       // how much momentum shifts per clear round
+const MOMENTUM_CAP = 2.0;        // cap on momentum effect
+const STAMINA_DRAIN_BASE = 9;    // stamina drain baseline / round
+const STAMINA_DRAIN_VAR  = 5;    // variation in drain
 const LOW_STAMINA_PENALTY = 0.6; // perf multiplier at 0 stamina (linear to 1.0)
 
 /**
@@ -53,9 +60,14 @@ export function fight(character1, character2, fightingStyleName) {
     return null;
   }
 
-  // Base style skill (static per fight)
-  const base1 = styleSkill(character1, style);
-  const base2 = styleSkill(character2, style);
+  // ── Presentation: classy intro card (purely visual) ───────────
+  renderEventCard(`${character1.name} vs ${character2.name}`, `Style: ${fightingStyleName}`);
+
+  // Base style skill (static per fight) with injury multipliers
+  const inj1 = injuryPerfMult(character1);
+  const inj2 = injuryPerfMult(character2);
+  const base1 = styleSkill(character1, style) * inj1;
+  const base2 = styleSkill(character2, style) * inj2;
 
   // Initialize stamina (seeded by their stamina attribute if present)
   let stam1 = Math.min(100, 60 + (character1.fighting_attributes.stamina ?? 40));
@@ -169,6 +181,9 @@ export function fight(character1, character2, fightingStyleName) {
   // Optional: show quick round-by-round (kept concise)
   say(`Rounds: ${roundDetail.join(", ")}.`, "match-info");
 
-  // (Injury lifecycle upgrades come in #2; keeping fights clean here.)
+  // ── Injury lifecycle hook: fighting while hurt may worsen it ──
+  maybeAggravateInjury(character1);
+  maybeAggravateInjury(character2);
+
   return { winner, loser };
 }
