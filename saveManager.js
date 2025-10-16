@@ -1,7 +1,7 @@
 // saveManager.js
-import { simulationState, resetSimulation } from "./simulationCore.js";
+import { simulationState } from "./simulationCore.js";
 
-// Simple key for localStorage
+// Single-slot local save
 const SAVE_KEY = "FiSimv5_SaveSlot1";
 
 function clone(obj) {
@@ -35,16 +35,15 @@ export function loadGame() {
       return;
     }
 
-    // Replace state
+    // Replace state in-place
     Object.keys(simulationState).forEach(k => delete simulationState[k]);
     Object.assign(simulationState, payload.simulationState);
 
-    // Restore relationships map
+    // Restore relationships map globally
     window.relationships = payload.relationships;
 
     notify("Game loaded.");
-    // You may want to re-render the current period/menu here if needed.
-    // Minimal approach: do nothing, the next user action refreshes UI.
+    // UI will refresh on next user action; optional: trigger a redraw if desired.
   } catch (e) {
     console.error(e);
     notify("Load failed.");
@@ -53,15 +52,16 @@ export function loadGame() {
 
 export function newGameConfirm() {
   if (confirm("Start a new game? Unsaved progress will be lost.")) {
-    resetSimulation();
-    notify("New game started.");
+    // simplest, reliable reset
+    localStorage.removeItem(SAVE_KEY);
+    location.reload();
   }
 }
 
 export function injectSaveUI() {
   const header = document.getElementById("header") || document.body;
   let bar = document.getElementById("globalControls");
-  if (bar) return; // already there
+  if (bar) return; // already present
 
   bar = document.createElement("div");
   bar.id = "globalControls";
