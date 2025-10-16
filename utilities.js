@@ -146,7 +146,159 @@ export function startInjuryWatcher(state) {
   }, 800);
 }
 
-/** ─── Relationship Setter (kept) ─────────────────────────────── */
+/** ───────────────────────────────────────────────────────────────
+ * SOCIAL STATE MACHINE (Romance / Cheating / Breakups)
+ * – Prevents “non-couple breakups”
+ * – Couples are explicitly tracked in window.relationshipsMeta
+ * – Consequences use mental attributes (loyalty, monogamy, cheating, jealousy, dominance, stability)
+ * ─────────────────────────────────────────────────────────────── */
+
+function edgeKey(a, b) {
+  const n1 = a.name, n2 = b.name;
+  return n1 < n2 ? `${n1}|${n2}` : `${n2}|${n1}`;
+}
+function ensureMeta() {
+  if (!window.relationshipsMeta) window.relationshipsMeta = {}; // { key: { couple: true, sinceDay, flags... } }
+  return window.relationshipsMeta;
+}
+export function areCouple(a, b) {
+  const meta = ensureMeta();
+  const e = meta[edgeKey(a, b)];
+  return !!(e && e.couple);
+}
+function setCouple(a, b, val) {
+  const meta = ensureMeta();
+  const key = edgeKey(a, b);
+  if (!meta[key]) meta[key] = {};
+  meta[key].couple = !!val;
+  if (val) meta[key].sinceDay = simulationState.day || 0;
+}
+
+/** Exclusivity: when A starts a new couple with B, demote other lovers. */
+function enforceExclusivity(a, b) {
+  const rels = window.relationships[a.name] || {};
+  for (const otherName in rels) {
+    if (otherName === b.name) continue;
+    const r = rels[otherName];
+    if (r.value >= REL_THRESHOLDS.LOVER.min) {
+      r.value = Math.max(REL_THRESHOLDS.BEST_FRIEND.min, REL_THRESHOLDS.BEST_FRIEND.min);
+      r.tier = getTierLabel(r.value); r.status = r.tier;
+      const other = window.characters.find(c => c.name === otherName);
+      const back = getRelationship(other, a);
+      back.value = r.value; back.tier = r.tier; back.status = r.status;
+      const meta = ensureMeta(); meta[edgeKey(a, other)] = meta[edgeKey(a, other)] || {};
+      meta[edgeKey(a, other)].couple = false;
+      appendMessage(`${a.name} is now exclusive with ${b.name}, so ${otherName} is no longer a lover.`, "relationship-demote");
+    }
+  }
+}
+
+/** Start Romance (only if not already a couple) */
+export function startRomance(a, b, reason = "They grow closer.") {
+  if (areCouple(a, b)) return;
+  const val = getRelationship(a, b).value;
+  if (val < REL_THRESHOLDS.LOVER.min) return; // must actually be lovers by score
+  setCouple(a, b, true);
+  setCouple(b, a, true);
+  enforceExclusivity(a, b);
+  enforceExclusivity(b, a);
+  appendMessage(`${a.name} and ${b.name} are now in a relationship. ${reason}`, "relationship-start");
+}
+
+/** Breakup (only if they are currently a couple) */
+export function breakUp(a, b, reason = "Differences surface.") {
+  if (!areCouple(a, b)) return; // prevents “non-couple breakup”
+  setCouple(a, b, false);
+  setCouple(b, a, false);
+  appendMessage(`${a.name} and ${b.name} have broken up. ${reason}`, "relationship-end");
+}
+
+/** Find current (single) lover for a person, if any (first hit) */
+function currentLoverOf(person) {
+  const meta = ensureMeta();
+  const names = Object.keys(window.relationships[person.name] || {});
+  for (const partnerName of names) {
+    const other = window.characters.find(c => c.name === partnerName);
+    if (!other) continue;
+    if (areCouple(person, other)) return other;
+  }
+  return null;
+}
+
+/** Register intimacy (called after “Have Sex” success, or villa seduce)
+ * Decides: form new couple? count as cheating? apply fallout.
+ */
+export function registerIntimacy(actor, partner) {
+  // Make sure relationships object exists (should already)
+  const rel = getRelationship(actor, partner);
+  // If already a couple — small stability buff, nothing else
+  if (areCouple(actor, partner)) {
+    rel.value = Math.min(100, rel.value + 1);
+    getRelationship(partner, actor).value = rel.value;
+    return;
+  }
+
+  // Probability to formalize as couple if lovers by score
+  if (rel.value >= REL_THRESHOLDS.LOVER.min) {
+    const aAttrs = actor.mental_attributes || {};
+    const bAttrs = partner.mental_attributes || {};
+    const commitment = ((aAttrs.loyalty || 50) + (bAttrs.loyalty || 50) + (aAttrs.monogamy || 50) + (bAttrs.monogamy || 50)) / 400;
+    if (Math.random() < Math.min(0.95, 0.4 + commitment)) {
+      startRomance(actor, partner, "They make it official.");
+    }
+  }
+
+  // Cheating: if actor (or partner) already has a current lover that is not the other
+  const actorsLover = currentLoverOf(actor);
+  const partnersLover = currentLoverOf(partner);
+
+  const doCheatOn = (cheater, cheatersLover, withWhom) => {
+    if (!cheatersLover) return;
+    if (cheatersLover.name === withWhom.name) return;
+
+    // Cheating chance influenced by cheater.cheating (propensity) and low monogamy
+    const m = (cheater.mental_attributes || {});
+    const cheatDrive = ((m.cheating || 30) / 100) * (1 - (m.monogamy || 50) / 100);
+    // The act already happened (we call after intimacy), so we apply fallout:
+
+    // Lover's reaction influenced by jealousy/loyalty/stability
+    const L = (cheatersLover.mental_attributes || {});
+    const jealousy = (L.jealousy || 50) / 100;
+    const loyalty = (L.loyalty || 50) / 100;
+    const stability = (L.stability || 50) / 100;
+
+    // Relationship drop:
+    const baseDrop = 10 + Math.round(20 * jealousy * (1 - stability));
+    const drop = Math.max(6, baseDrop);
+    const val1 = getRelationship(cheatersLover, cheater).value - drop;
+    const val2 = getRelationship(cheater, cheatersLover).value - (drop - 3);
+    getRelationship(cheatersLover, cheater).value = Math.max(0, val1);
+    getRelationship(cheater, cheatersLover).value = Math.max(0, val2);
+
+    appendMessage(
+      `${cheatersLover.name} learns about ${cheater.name} and ${withWhom.name}. (-${drop} relationship)`,
+      "relationship-end"
+    );
+
+    // Breakup decision:
+    const breakupThreshold = Math.max(REL_THRESHOLDS.BEST_FRIEND.min, config.relationshipThresholds.breakup || 25);
+    const nowVal = getRelationship(cheatersLover, cheater).value;
+    const likelyBreakup =
+      nowVal <= breakupThreshold ||
+      Math.random() < (0.35 + 0.3 * jealousy + 0.2 * (1 - loyalty));
+
+    if (likelyBreakup && areCouple(cheatersLover, cheater)) {
+      breakUp(cheatersLover, cheater, "Cheating shattered the trust.");
+    }
+  };
+
+  doCheatOn(actor, actorsLover, partner);
+  doCheatOn(partner, partnersLover, actor);
+}
+
+/** ─── Relationship Setter (updated to integrate couples cleanly) ───────────
+ * Only starts/ends couples when appropriate. Prevents “non-couple breakup”.
+ */
 export function setRelationship(a, b, newVal) {
   const relAB = getRelationship(a, b);
   const oldVal = relAB.value;
@@ -159,40 +311,15 @@ export function setRelationship(a, b, newVal) {
   relBA.tier = relAB.tier;
   relBA.status = relBA.tier;
 
-  const { newRelationship, breakup } = config.relationshipThresholds;
-  if (oldVal < newRelationship && relAB.value >= newRelationship) {
-    appendMessage(`${a.name} and ${b.name} have started a relationship!`, "relationship-start");
-  } else if (oldVal > breakup && relAB.value <= breakup) {
-    appendMessage(`${a.name} and ${b.name} have broken up.`, "relationship-end");
+  // START: only if crossing into Lover tier and not already a couple
+  if (oldVal < REL_THRESHOLDS.LOVER.min && relAB.value >= REL_THRESHOLDS.LOVER.min && !areCouple(a, b)) {
+    startRomance(a, b, "Feelings deepen.");
   }
 
-  // Exclusivity: if A↔B are Lovers, demote other lovers to ≤ Best Friend
-  if (relAB.tier === REL_THRESHOLDS.LOVER.label) {
-    const demoteOther = (subject, partner) => {
-      const rels = window.relationships[subject.name];
-      for (const other in rels) {
-        if (other === partner.name) continue;
-        const val = rels[other].value;
-        if (val >= REL_THRESHOLDS.LOVER.min) {
-          rels[other].value = Math.max(REL_THRESHOLDS.BEST_FRIEND.min, Math.min(val, REL_THRESHOLDS.BEST_FRIEND.min));
-          rels[other].tier = getTierLabel(rels[other].value);
-          rels[other].status = rels[other].tier;
-          const back = getRelationship(
-            window.characters.find(c => c.name === other),
-            subject
-          );
-          back.value = rels[other].value;
-          back.tier = rels[other].tier;
-          back.status = rels[other].tier;
-          appendMessage(
-            `${subject.name} is now exclusive with ${partner.name}, so ${other} is no longer a lover.`,
-            "relationship-demote"
-          );
-        }
-      }
-    };
-    demoteOther(a, b);
-    demoteOther(b, a);
+  // END: only if they are currently a couple AND the value falls below breakup
+  const breakupCut = Math.max(REL_THRESHOLDS.BEST_FRIEND.min, config.relationshipThresholds.breakup || 25);
+  if (relAB.value <= breakupCut && areCouple(a, b)) {
+    breakUp(a, b, "They drift apart.");
   }
 }
 
@@ -208,8 +335,8 @@ export function handleJealousy(actor, target) {
       )
   );
   others.forEach(bystander => {
-    const baseJ = bystander.mental_attributes.jealousy / 100;
-    const mono = bystander.mental_attributes.monogamy / 100;
+    const baseJ = (bystander.mental_attributes.jealousy || 50) / 100;
+    const mono = (bystander.mental_attributes.monogamy || 50) / 100;
     if (Math.random() < baseJ * (1 - mono)) {
       // placeholder for jealousy confrontation logic
     }
@@ -228,7 +355,7 @@ export function simulateNPCActivities() {
   });
 }
 
-/** ─── Fight Proposal Evaluation (kept, now uses new injury) ──── */
+/** ─── Fight Proposal Evaluation (kept, uses injury) ───────────── */
 export function evaluateFightProposal(opponent, proposer) {
   const mental = opponent.mental_attributes;
   const rel = getRelationship(opponent, proposer).value;
@@ -274,7 +401,8 @@ const suggestionPool = {
           result: npc => `You and ${npc.name} enjoy a feast. (+3 stamina)`,
           effect: () => {
             const before = simulationState.playerCharacter.fighting_attributes.stamina;
-            simulationState.playerCharacter.fighting_attributes.stamina = Math.min(100, before + 3);
+            simulationState.playerCharacter.fighting_attributes.stamina =
+              Math.min(100, before + 3);
             const gain = 50;
             simulationState.playerMoney += gain;
             appendMessage(`You found a small tip jar! +$${gain}`, "event-info");
