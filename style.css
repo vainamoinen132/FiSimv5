@@ -1,0 +1,236 @@
+/*────────────────────────────────────────
+  Variables & Base
+────────────────────────────────────────*/
+:root {
+  --bg: #eef2f5;
+  --card-bg: #ffffff;
+  --primary: #5a6f94;
+  --primary-hover: #495975;
+  --text: #2d3436;
+  --accent: #f0a500;
+  --shadow-light: rgba(0, 0, 0, 0.05);
+  --shadow-medium: rgba(0, 0, 0, 0.1);
+  --shadow-dark: rgba(0, 0, 0, 0.15);
+  --radius: 12px;
+  --spacing: 1rem;
+  --font: 'HK Grotesk', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font);
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/*────────────────────────────────────────
+  Layout
+────────────────────────────────────────*/
+.container {
+  display: grid;
+  grid-template-areas:
+    "header header"
+    "sidebar main";
+  grid-template-columns: 220px 1fr;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+}
+
+.header {
+  grid-area: header;
+  background: var(--card-bg);
+  padding: var(--spacing);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px var(--shadow-light);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.sidebar {
+  grid-area: sidebar;
+  background: var(--card-bg);
+  padding: var(--spacing);
+  box-shadow: 2px 0 4px var(--shadow-light);
+}
+
+.main {
+  grid-area: main;
+  padding: var(--spacing);
+  overflow-y: auto;
+}
+
+/*────────────────────────────────────────
+  Typography & Buttons
+────────────────────────────────────────*/
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text);
+  margin-bottom: 0.75rem;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.btn, .modern-btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  transition: 
+    background 0.2s ease, 
+    transform 0.1s ease, 
+    box-shadow 0.2s ease;
+}
+.btn:hover, .modern-btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow-medium);
+}
+.btn:active, .modern-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px var(--shadow-light);
+}
+
+/*────────────────────────────────────────
+  Cards & Sections
+────────────────────────────────────────*/
+.card {
+  background: var(--card-bg);
+  padding: var(--spacing);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 4px var(--shadow-light);
+  margin-bottom: var(--spacing);
+}
+
+/*────────────────────────────────────────
+  Grid Selection (Character & Player Pick)
+────────────────────────────────────────*/
+.grid-selection {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--spacing);
+  margin-bottom: var(--spacing);
+}
+
+.grid-selection label {
+  background: var(--card-bg);
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px var(--shadow-light);
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.grid-selection label img,
+.character-img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: var(--radius);
+}
+
+/*────────────────────────────────────────
+  AP Menu (Beautified)
+────────────────────────────────────────*/
+.ap-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: var(--card-bg);
+  padding: calc(var(--spacing) * 1.5);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px var(--shadow-medium);
+  max-width: 360px;
+  margin: var(--spacing) auto;
+}
+.ap-menu .modern-btn {
+  width: 100%;
+  font-size: 1.05rem;
+}
+
+/*────────────────────────────────────────
+  Character thumbnail grid (Interact UI)
+────────────────────────────────────────*/
+.character-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.character-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  object-position: center top;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+.character-thumb.selected {
+  border-color: var(--accent);
+}
+
+/*────────────────────────────────────────
+  AP Counter
+────────────────────────────────────────*/
+.ap-counter {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--accent);
+}
+
+/*────────────────────────────────────────
+  Modal
+────────────────────────────────────────*/
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+.modal-content {
+  background: var(--card-bg);
+  padding: var(--spacing);
+  border-radius: var(--radius);
+  width: 320px;
+  box-shadow: 0 4px 16px var(--shadow-medium);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+}
+.modal-content h2 {
+  margin-top: 0;
+}
+
+/*────────────────────────────────────────
+  Utility
+────────────────────────────────────────*/
+.hidden {
+  display: none;
+}

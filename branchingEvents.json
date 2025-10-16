@@ -1,0 +1,854 @@
+{
+  "events": [
+    {
+      "id": "event1",
+      "timeOfDay": ["morning"],
+      "description": "You wake up early and find a mysterious letter slipped under your door.",
+      "choices": [
+        {
+          "text": "Open the letter immediately",
+          "outcome": "The letter contains a clue to a secret training technique. (+1 technique)",
+          "effect": { "type": "attribute", "attribute": "technique", "amount": 1 }
+        },
+        {
+          "text": "Ignore it for now",
+          "outcome": "Curiosity nags at you all morning. (-1 stability)",
+          "effect": { "type": "attribute", "attribute": "stability", "amount": -1 }
+        }
+      ]
+    },
+    {
+      "id": "event2",
+      "timeOfDay": ["morning"],
+      "description": "A local vendor offers to sell you a rare herbal tea said to boost energy.",
+      "choices": [
+        {
+          "text": "Buy a cup",
+          "outcome": "The brew invigorates you. (+1 endurance)",
+          "effect": { "type": "attribute", "attribute": "stamina", "amount": 1 }
+        },
+        {
+          "text": "Decline politely",
+          "outcome": "You save your coin but feel a bit drained. (-1 stamina)",
+          "effect": { "type": "attribute", "attribute": "stamina", "amount": -1 }
+        }
+      ]
+    },
+    {
+      "id": "event3",
+      "timeOfDay": ["morning"],
+      "description": "You come across a stray dog following you as you jog.",
+      "choices": [
+        {
+          "text": "Feed and pet it",
+          "outcome": "The dog’s loyalty warms you. (+1 loyalty)",
+          "effect": { "type": "attribute", "attribute": "loyalty", "amount": 1 }
+        },
+        {
+          "text": "Shoo it away",
+          "outcome": "You finish uneasily. (-1 stability)",
+          "effect": { "type": "attribute", "attribute": "stability", "amount": -1 }
+        }
+      ]
+    },
+    {
+      "id": "event4",
+      "timeOfDay": ["morning"],
+      "description": "Your training partner oversleeps and misses your planned workout.",
+      "choices": [
+        {
+          "text": "Train alone anyway",
+          "outcome": "You push through fiercely. (+2 strength)",
+          "effect": { "type": "attribute", "attribute": "strength", "amount": 2 }
+        },
+        {
+          "text": "Go back to rest",
+          "outcome": "You feel refreshed but miss momentum. (+1 stability)",
+          "effect": { "type": "attribute", "attribute": "stability", "amount": 1 }
+        }
+      ]
+    },
+    {
+      "id": "event5",
+      "timeOfDay": ["morning"],
+      "description": "You find a quiet spot by the river to meditate.",
+      "choices": [
+        {
+          "text": "Spend 10 minutes in silence",
+          "outcome": "Your mind sharpens. (+1 stability)",
+          "effect": { "type": "attribute", "attribute": "stability", "amount": 1 }
+        },
+        {
+          "text": "Skip meditation to train more",
+          "outcome": "Your stamina improves but your focus scatters. (+1 stamina)",
+          "effect": { "type": "attribute", "attribute": "stamina", "amount": 1 }
+        }
+      ]
+    },
+    {
+      "id": "event6",
+      "timeOfDay": ["morning"],
+      "description": "A rival athlete challenges you to a footrace.",
+      "choices": [
+        {
+          "text": "Accept the race",
+          "outcome": "You outpace {target}. (+1 agility)",
+          "effect": { "type": "attribute", "attribute": "agility", "amount": 1 }
+        },
+        {
+          "text": "Decline politely",
+          "outcome": "You conserve energy but feel a pang of regret. (-1 stability)",
+          "effect": { "type": "attribute", "attribute": "stability", "amount": -1 }
+        }
+      ]
+    },
+    {
+      "id": "event7",
+      "timeOfDay": ["morning"],
+      "description": "You discover a new stretching routine online.",
+      "choices": [
+        {
+          "text": "Incorporate it immediately",
+          "outcome": "Your reflexes feel sharper. (+1 reflexes)",
+          "effect": { "type": "attribute", "attribute": "reflexes", "amount": 1 }
+        },
+        {
+          "text": "Stick to your old warm-up",
+          "outcome": "You feel safe but stagnant. (-1 technique)",
+          "effect": { "type": "attribute", "attribute": "technique", "amount": -1 }
+        }
+      ]
+    },
+    {
+      "id": "event8",
+      "timeOfDay": ["morning"],
+      "description": "You spot a fellow contestant upset in the locker room.",
+      "choices": [
+        {
+          "text": "Offer a kind word",
+          "outcome": "They appreciate it. (+1 relationship with {target})",
+          "effect": { "type": "relationship", "target": "{target}", "amount": 1 }
+        },
+        {
+          "text": "Give them space",
+          "outcome": "They nod politely; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event9",
+      "timeOfDay": ["morning"],
+      "description": "The coach stops by and offers a bonus skill drill.",
+      "choices": [
+        {
+          "text": "Take the drill",
+          "outcome": "Your technique improves. (+1 technique)",
+          "effect": { "type": "attribute", "attribute": "technique", "amount": 1 }
+        },
+        {
+          "text": "Politely decline",
+          "outcome": "You focus on basics; no gain.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event10",
+      "timeOfDay": ["morning"],
+      "description": "You find an old training manual in the common room.",
+      "choices": [
+        {
+          "text": "Study its tactics",
+          "outcome": "Your technique grows keener. (+1 technique)",
+          "effect": { "type": "attribute", "attribute": "technique", "amount": 1 }
+        },
+        {
+          "text": "Ignore it and stretch",
+          "outcome": "You feel limber; no strategic gain.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event11",
+      "timeOfDay": ["morning"],
+      "description": "A sudden rain shower begins as you train outdoors.",
+      "choices": [
+        {
+          "text": "Push through in the rain",
+          "outcome": "Your endurance toughens. (+1 endurance)",
+          "effect": { "type": "attribute", "attribute": "endurance", "amount": 1 }
+        },
+        {
+          "text": "Seek shelter and wait",
+          "outcome": "You stay dry but lose momentum. (+1 stability)",
+          "effect": { "type": "attribute", "attribute": "stability", "amount": 1 }
+        }
+      ]
+    },
+    {
+      "id": "event12",
+      "timeOfDay": ["morning"],
+      "description": "You run into the quiet librarian who offers a motivational quote.",
+      "choices": [
+        {
+          "text": "Listen attentively",
+          "outcome": "Your resolve strengthens. (+1 stability)",
+          "effect": { "type": "attribute", "attribute": "stability", "amount": 1 }
+        },
+        {
+          "text": "Thank and move on",
+          "outcome": "You smile politely; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event13",
+      "timeOfDay": ["morning"],
+      "description": "You find a coin on the ground etched with a symbol of power.",
+      "choices": [
+        {
+          "text": "Keep it for luck",
+          "outcome": "You feel empowered. (+1 dominance)",
+          "effect": { "type": "attribute", "attribute": "dominance", "amount": 1 }
+        },
+        {
+          "text": "Return it to someone",
+          "outcome": "You earn someone’s gratitude. (+1 loyalty)",
+          "effect": { "type": "attribute", "attribute": "loyalty", "amount": 1 }
+        }
+      ]
+    },
+    {
+      "id": "event14",
+      "timeOfDay": ["morning"],
+      "description": "A teammate asks you to spar before breakfast.",
+      "choices": [
+        {
+          "text": "Spar with them",
+          "outcome": "You both sharpen skills. (+1 relationship with {target})",
+          "effect": { "type": "relationship", "target": "{target}", "amount": 1 }
+        },
+        {
+          "text": "Decline to fuel up",
+          "outcome": "They understand; rapport dips. (-1 relationship with {target})",
+          "effect": { "type": "relationship", "target": "{target}", "amount": -1 }
+        }
+      ]
+    },
+    {
+      "id": "event15",
+      "timeOfDay": ["morning"],
+      "description": "You notice a broken training mat in the corner.",
+      "choices": [
+        {
+          "text": "Fix it yourself",
+          "outcome": "Your technique improves. (+1 technique)",
+          "effect": { "type": "attribute", "attribute": "technique", "amount": 1 }
+        },
+        {
+          "text": "Report it to staff",
+          "outcome": "They thank you; no personal gain.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event16",
+      "timeOfDay": ["morning"],
+      "description": "You discover someone left warm towels in the gym.",
+      "choices": [
+        {
+          "text": "Use one gratefully",
+          "outcome": "Your stamina gets a boost. (+1 stamina)",
+          "effect": { "type": "attribute", "attribute": "stamina", "amount": 1 }
+        },
+        {
+          "text": "Save it for later",
+          "outcome": "You miss its comfort; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event17",
+      "timeOfDay": ["morning"],
+      "description": "The sunrise catches your eye during your run.",
+      "choices": [
+        {
+          "text": "Pause and admire it",
+          "outcome": "Your morale steadies. (+1 stability)",
+          "effect": { "type": "attribute", "attribute": "stability", "amount": 1 }
+        },
+        {
+          "text": "Keep pushing ahead",
+          "outcome": "Your stamina rises. (+1 stamina)",
+          "effect": { "type": "attribute", "attribute": "stamina", "amount": 1 }
+        }
+      ]
+    },
+    {
+      "id": "event18",
+      "timeOfDay": ["morning"],
+      "description": "A mysterious stranger offers you a fortune cookie.",
+      "choices": [
+        {
+          "text": "Eat it",
+          "outcome": "Its flavor emboldens you. (+1 craziness)",
+          "effect": { "type": "attribute", "attribute": "craziness", "amount": 1 }
+        },
+        {
+          "text": "Decline politely",
+          "outcome": "You stay cautious; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event19",
+      "timeOfDay": ["morning"],
+      "description": "You find footprints leading off the training grounds.",
+      "choices": [
+        {
+          "text": "Follow them briefly",
+          "outcome": "You uncover a hidden route. (+1 agility)",
+          "effect": { "type": "attribute", "attribute": "agility", "amount": 1 }
+        },
+        {
+          "text": "Stay on track",
+          "outcome": "You remain focused; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event20",
+      "timeOfDay": ["morning"],
+      "description": "Your favorite breakfast arrives early today.",
+      "choices": [
+        {
+          "text": "Enjoy it slowly",
+          "outcome": "You feel nourished. (+1 stamina)",
+          "effect": { "type": "attribute", "attribute": "stamina", "amount": 1 }
+        },
+        {
+          "text": "Eat quickly and rush out",
+          "outcome": "You gain energy but feel flustered. (+1 stamina)",
+          "effect": { "type": "attribute", "attribute": "stamina", "amount": 1 }
+        }
+      ]
+    },
+    {
+      "id": "event21",
+      "timeOfDay": ["noon"],
+      "description": "The noon bell rings and you smell fresh‐baked bread.",
+      "choices": [
+        {
+          "text": "Grab a piece",
+          "outcome": "Your stamina rises. (+1 stamina)",
+          "effect": { "type": "attribute", "attribute": "stamina", "amount": 1 }
+        },
+        {
+          "text": "Stay disciplined",
+          "outcome": "Your loyalty to your diet holds. (+1 monogamy)",
+          "effect": { "type": "attribute", "attribute": "monogamy", "amount": 1 }
+        }
+      ]
+    },
+    {
+      "id": "event22",
+      "timeOfDay": ["noon"],
+      "description": "A group of contestants invites you to a quick bout of hand‐to‐hand drills.",
+      "choices": [
+        {
+          "text": "Join them",
+          "outcome": "Your technique sharpens. (+1 technique)",
+          "effect": { "type": "attribute", "attribute": "technique", "amount": 1 }
+        },
+        {
+          "text": "Decline to rest",
+          "outcome": "You conserve energy; no gain.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event23",
+      "timeOfDay": ["noon"],
+      "description": "You find a shady spot to take a short nap.",
+      "choices": [
+        {
+          "text": "Nap for 15 minutes",
+          "outcome": "Your stamina and focus improve. (+1 stamina)",
+          "effect": { "type": "attribute", "attribute": "stamina", "amount": 1 }
+        },
+        {
+          "text": "Keep moving",
+          "outcome": "You stay active but tire faster. (-1 stamina)",
+          "effect": { "type": "attribute", "attribute": "stamina", "amount": -1 }
+        }
+      ]
+    },
+    {
+      "id": "event24",
+      "timeOfDay": ["noon"],
+      "description": "You see two contestants whispering and glancing your way.",
+      "choices": [
+        {
+          "text": "Approach them",
+          "outcome": "They share juicy gossip. (+1 relationship with {target})",
+          "effect": { "type": "relationship", "target": "{target}", "amount": 1 }
+        },
+        {
+          "text": "Walk away",
+          "outcome": "You avoid drama; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event25",
+      "timeOfDay": ["noon"],
+      "description": "A vendor offers you an exotic midday smoothie.",
+      "choices": [
+        {
+          "text": "Try the smoothie",
+          "outcome": "You feel revitalized. (+1 stamina)",
+          "effect": { "type": "attribute", "attribute": "stamina", "amount": 1 }
+        },
+        {
+          "text": "Save your money",
+          "outcome": "You stay disciplined; no gain.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event26",
+      "timeOfDay": ["noon"],
+      "description": "You find a broken bench press and wonder if you can fix it.",
+      "choices": [
+        {
+          "text": "Attempt a quick repair",
+          "outcome": "Your technique improves. (+1 technique)",
+          "effect": { "type": "attribute", "attribute": "technique", "amount": 1 }
+        },
+        {
+          "text": "Leave it for staff",
+          "outcome": "They’ll handle it; no personal gain.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event27",
+      "timeOfDay": ["noon"],
+      "description": "Your friend challenges you to a push‐up contest.",
+      "choices": [
+        {
+          "text": "Accept and win",
+          "outcome": "Your strength shines. (+1 strength)",
+          "effect": { "type": "attribute", "attribute": "strength", "amount": 1 }
+        },
+        {
+          "text": "Decline to rest",
+          "outcome": "You conserve energy; no gain.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event28",
+      "timeOfDay": ["noon"],
+      "description": "A sudden wind knocks over some equipment.",
+      "choices": [
+        {
+          "text": "Help pick it up",
+          "outcome": "Everyone thanks you. (+1 relationship with {target})",
+          "effect": { "type": "relationship", "target": "{target}", "amount": 1 }
+        },
+        {
+          "text": "Watch from afar",
+          "outcome": "You avoid effort but feel distant. (-1 relationship with {target})",
+          "effect": { "type": "relationship", "target": "{target}", "amount": -1 }
+        }
+      ]
+    },
+    {
+      "id": "event29",
+      "timeOfDay": ["noon"],
+      "description": "You stumble upon an old trainee’s journal.",
+      "choices": [
+        {
+          "text": "Read a passage",
+          "outcome": "Your strategy insight grows. (+1 technique)",
+          "effect": { "type": "attribute", "attribute": "technique", "amount": 1 }
+        },
+        {
+          "text": "Put it down",
+          "outcome": "You respect privacy; no gain.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event30",
+      "timeOfDay": ["noon"],
+      "description": "The heat bears down during your outdoor drill.",
+      "choices": [
+        {
+          "text": "Drink from a fountain",
+          "outcome": "Your stamina steadies. (+1 stamina)",
+          "effect": { "type": "attribute", "attribute": "stamina", "amount": 1 }
+        },
+        {
+          "text": "Push on despite heat",
+          "outcome": "Your endurance is tested. (+1 endurance)",
+          "effect": { "type": "attribute", "attribute": "endurance", "amount": 1 }
+        }
+      ]
+    },
+    {
+      "id": "event31",
+      "timeOfDay": ["noon"],
+      "description": "You spot a butterfly landing on your shoulder.",
+      "choices": [
+        {
+          "text": "Stay still and watch",
+          "outcome": "You feel composed. (+1 stability)",
+          "effect": { "type": "attribute", "attribute": "stability", "amount": 1 }
+        },
+        {
+          "text": "Brush it away",
+          "outcome": "You miss its calm influence. (-1 stability)",
+          "effect": { "type": "attribute", "attribute": "stability", "amount": -1 }
+        }
+      ]
+    },
+    {
+      "id": "event32",
+      "timeOfDay": ["noon"],
+      "description": "A coach offers midday feedback on your form.",
+      "choices": [
+        {
+          "text": "Listen closely",
+          "outcome": "Your technique refines. (+1 technique)",
+          "effect": { "type": "attribute", "attribute": "technique", "amount": 1 }
+        },
+        {
+          "text": "Politely decline",
+          "outcome": "You maintain your own style; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event33",
+      "timeOfDay": ["noon"],
+      "description": "You find a hidden stash of protein bars.",
+      "choices": [
+        {
+          "text": "Eat one",
+          "outcome": "Your stamina rises. (+1 stamina)",
+          "effect": { "type": "attribute", "attribute": "stamina", "amount": 1 }
+        },
+        {
+          "text": "Save it for later",
+          "outcome": "You resist temptation; no gain.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event34",
+      "timeOfDay": ["noon"],
+      "description": "A fellow contestant asks for your tactical advice.",
+      "choices": [
+        {
+          "text": "Offer your insight",
+          "outcome": "They admire you. (+1 relationship with {target})",
+          "effect": { "type": "relationship", "target": "{target}", "amount": 1 }
+        },
+        {
+          "text": "Decline tactfully",
+          "outcome": "You avoid bias; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event35",
+      "timeOfDay": ["noon"],
+      "description": "You see a vibrant mural on the training hall wall.",
+      "choices": [
+        {
+          "text": "Admire its artistry",
+          "outcome": "Your morale steadies. (+1 stability)",
+          "effect": { "type": "attribute", "attribute": "stability", "amount": 1 }
+        },
+        {
+          "text": "Ignore and continue",
+          "outcome": "You stay focused; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event36",
+      "timeOfDay": ["noon"],
+      "description": "A stray cat weaves between your legs in the dining hall.",
+      "choices": [
+        {
+          "text": "Feed it a scrap",
+          "outcome": "Your compassion grows. (+1 loyalty)",
+          "effect": { "type": "attribute", "attribute": "loyalty", "amount": 1 }
+        },
+        {
+          "text": "Shoo it away",
+          "outcome": "You keep tidy; no gain.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event37",
+      "timeOfDay": ["noon"],
+      "description": "You’re offered a rare midday stretching class.",
+      "choices": [
+        {
+          "text": "Join the session",
+          "outcome": "Your reflexes ease. (+1 reflexes)",
+          "effect": { "type": "attribute", "attribute": "reflexes", "amount": 1 }
+        },
+        {
+          "text": "Pass this time",
+          "outcome": "You stick to plan; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event38",
+      "timeOfDay": ["noon"],
+      "description": "A contest organizer offers free fruit skewers.",
+      "choices": [
+        {
+          "text": "Enjoy a skewer",
+          "outcome": "Your stamina perks up. (+1 stamina)",
+          "effect": { "type": "attribute", "attribute": "stamina", "amount": 1 }
+        },
+        {
+          "text": "Skip to save appetite",
+          "outcome": "You stay disciplined; no gain.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event39",
+      "timeOfDay": ["noon"],
+      "description": "You see two contestants debating tactics loudly.",
+      "choices": [
+        {
+          "text": "Offer your perspective",
+          "outcome": "They respect you. (+1 relationship with {target})",
+          "effect": { "type": "relationship", "target": "{target}", "amount": 1 }
+        },
+        {
+          "text": "Stay out of it",
+          "outcome": "You avoid drama; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event40",
+      "timeOfDay": ["noon"],
+      "description": "A gust of wind blows your towel off a bench.",
+      "choices": [
+        {
+          "text": "Chase and catch it",
+          "outcome": "Your agility sharpens. (+1 agility)",
+          "effect": { "type": "attribute", "attribute": "agility", "amount": 1 }
+        },
+        {
+          "text": "Let it go",
+          "outcome": "You lose the towel; no skill gain.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event41",
+      "timeOfDay": ["noon"],
+      "description": "You find a motivational poster with an intoxicating image.",
+      "choices": [
+        {
+          "text": "Let it fire your desire",
+          "outcome": "Your seduction surges. (+1 seduction)",
+          "effect": { "type": "attribute", "attribute": "seduction", "amount": 1 }
+        },
+        {
+          "text": "Tear it down",
+          "outcome": "You rebel hard; lose focus. (-1 technique)",
+          "effect": { "type": "attribute", "attribute": "technique", "amount": -1 }
+        }
+      ]
+    },
+    {
+      "id": "event42",
+      "timeOfDay": ["noon"],
+      "description": "A coach invites you to review a spicy combat demonstration video.",
+      "choices": [
+        {
+          "text": "Watch and learn",
+          "outcome": "Your technique refines. (+1 technique)",
+          "effect": { "type": "attribute", "attribute": "technique", "amount": 1 }
+        },
+        {
+          "text": "Pass to rest eyes",
+          "outcome": "You rest but miss insights. (-1 stability)",
+          "effect": { "type": "attribute", "attribute": "stability", "amount": -1 }
+        }
+      ]
+    },
+    {
+      "id": "event43",
+      "timeOfDay": ["noon"],
+      "description": "A rival catches your eye from across the hall with an alluring smirk.",
+      "choices": [
+        {
+          "text": "Return the flirt",
+          "outcome": "Your flirtiness rises. (+1 flirtiness)",
+          "effect": { "type": "attribute", "attribute": "flirtiness", "amount": 1 }
+        },
+        {
+          "text": "Ignore and train",
+          "outcome": "You focus on drills; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event44",
+      "timeOfDay": ["noon"],
+      "description": "You stumble upon a steamy dance‐fight demonstration.",
+      "choices": [
+        {
+          "text": "Join in boldly",
+          "outcome": "Your dominance soars. (+1 dominance)",
+          "effect": { "type": "attribute", "attribute": "dominance", "amount": 1 }
+        },
+        {
+          "text": "Watch from the sidelines",
+          "outcome": "You study technique; no direct gain.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event45",
+      "timeOfDay": ["noon"],
+      "description": "Two contestants argue over a flirting technique.",
+      "choices": [
+        {
+          "text": "Offer your seductive tip",
+          "outcome": "They appreciate it. (+1 relationship with {target})",
+          "effect": { "type": "relationship", "target": "{target}", "amount": 1 }
+        },
+        {
+          "text": "Stay aloof",
+          "outcome": "You keep distance; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event46",
+      "timeOfDay": ["noon"],
+      "description": "A rival challenges you to a sudden arm‐wrestle match.",
+      "choices": [
+        {
+          "text": "Lock arms and fight",
+          "outcome": "You crush them. (+1 strength)",
+          "effect": { "type": "attribute", "attribute": "strength", "amount": 1 }
+        },
+        {
+          "text": "Decline gracefully",
+          "outcome": "You preserve energy; no gain.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event47",
+      "timeOfDay": ["noon"],
+      "description": "You discover a secret erotic sparring tutorial hidden in the archives.",
+      "choices": [
+        {
+          "text": "Practice its moves",
+          "outcome": "Your seduction and technique improve. (+1 technique)",
+          "effect": { "type": "attribute", "attribute": "technique", "amount": 1 }
+        },
+        {
+          "text": "Ignore it for now",
+          "outcome": "You stick to standard drills; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event48",
+      "timeOfDay": ["noon"],
+      "description": "A photographer offers to take a steamy portrait for the bulletin board.",
+      "choices": [
+        {
+          "text": "Pose confidently",
+          "outcome": "Your attractiveness shines. (+1 attractiveness)",
+          "effect": { "type": "attribute", "attribute": "attractiveness", "amount": 1 }
+        },
+        {
+          "text": "Decline shyly",
+          "outcome": "You avoid the spotlight; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event49",
+      "timeOfDay": ["noon"],
+      "description": "You spot a contest bulletin with today’s surprise fight format.",
+      "choices": [
+        {
+          "text": "Study the format",
+          "outcome": "Your readiness increases. (+1 technique)",
+          "effect": { "type": "attribute", "attribute": "technique", "amount": 1 }
+        },
+        {
+          "text": "Ignore and improvise",
+          "outcome": "You rely on instinct; no change.",
+          "effect": null
+        }
+      ]
+    },
+    {
+      "id": "event50",
+      "timeOfDay": ["noon"],
+      "description": "You find a friendly group doing lunchtime yoga with sensual flows.",
+      "choices": [
+        {
+          "text": "Join the session",
+          "outcome": "Your flexibility and flirtiness grow. (+1 reflexes)",
+          "effect": { "type": "attribute", "attribute": "reflexes", "amount": 1 }
+        },
+        {
+          "text": "Skip to train elsewhere",
+          "outcome": "You focus on strength; no gain.",
+          "effect": null
+        }
+      ]
+    }
+  ]
+}

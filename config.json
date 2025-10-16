@@ -1,0 +1,8 @@
+{
+  "totalDays": 100,
+  "timeSlots": ["Morning", "Noon", "Afternoon", "Evening", "Night"],
+  "eliminationMode": true,
+  "eliminationInterval": 20,
+  "apPerPeriod": 3,
+  "tournamentBonusAP": { "finalist": 1, "champion": 2 }
+}

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Survivor Mode Game</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=HK+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- sticky header -->
+    <header class="header">
+      <h1 class="logo">Survivor Mode</h1>
+      <div id="apCounter" class="ap-counter">Remaining AP: 0</div>
+    </header>
+    
+    <!-- sidebar nav -->
+    <aside class="sidebar">
+      <nav class="nav-menu">
+        <button id="startGameMain" class="btn">Start Game</button>
+        <button id="gameOptionsBtn" class="btn">Game Options</button>
+        <button id="leaderboardBtn" class="btn">Leaderboard</button>
+      </nav>
+    </aside>
+    
+    <!-- main content -->
+    <main class="main">
+      <!-- Setup / Character Selection -->
+      <section id="setup" class="card hidden">
+        <!-- Stage 1: Character selection -->
+        <div id="selectionStage" class="stage">
+          <h2>Select 8 Characters</h2>
+          <div id="characterSelection" class="grid-selection"></div>
+          <button id="nextAfterSelection" class="btn primary">Next</button>
+        </div>
+        <!-- Stage 2: Player character pick -->
+        <div id="playerStage" class="stage hidden">
+          <h2>Choose Your Character</h2>
+          <div id="playerSelection" class="grid-selection"></div>
+          <button id="startGameButton" class="btn primary">Start Game</button>
+        </div>
+      </section>
+      
+      <!-- Game output log -->
+      <section id="game-output" class="card game-output">
+        <!-- dynamic messages go here -->
+      </section>
+    </main>
+  </div>
+  
+  <!-- Options modal -->
+  <div id="gameOptionsModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Game Options</h2>
+      <label>
+        Duration (days):
+        <select id="durationSelect">
+          <option value="20">20</option>
+          <option value="50" selected>50</option>
+          <option value="100">100</option>
+        </select>
+      </label>
+      <label>
+        Elimination Interval (days):
+        <select id="eliminationSelect">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="20">20</option>
+        </select>
+      </label>
+      <button id="saveOptionsBtn" class="btn primary">Save</button>
+      <button id="closeOptionsBtn" class="btn">Close</button>
+    </div>
+  </div>
+
+  <!-- Leaderboard modal -->
+  <div id="leaderboardModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Leaderboard</h2>
+      <table id="leaderboardTable">
+        <thead>
+          <tr>
+            <th>Character</th>
+            <th>🏆 Champs</th>
+            <th>✔️ Wins</th>
+            <th>❌ Losses</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <button id="closeLeaderboardBtn" class="btn">Close</button>
+    </div>
+  </div>
+  
+  <!-- only your JS module -->
+  <script type="module" src="main.js"></script>
+</body>
+</html>
