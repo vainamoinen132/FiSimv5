@@ -8,6 +8,7 @@ import { startInteractiveSimulation, simulationState } from "./simulationCore.js
 import { characterPics } from "./characterManager.js";
 import { config } from "./config.js";
 import { startInjuryWatcher } from "./utilities.js"; // NEW
+import { initUIDecor } from "./uiDecor.js";          // NEW: atmosphere CSS + helpers
 
 document.addEventListener("DOMContentLoaded", () => {
   // Sidebar buttons
