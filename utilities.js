@@ -52,23 +52,101 @@ export function updateMoneyDisplay() {
   moneyEl.innerText = `Money: $${simulationState.playerMoney}`;
 }
 
-/** ─── Injury Utilities ───────────────────────────────────────────
- * Injuries now have severity and impose fight disadvantages,
- * but never fully bench you.
- **************************************/
-export function injureCharacter(character, level) {
+/** ─── Injury System (severity with days, penalties, healing) ────
+ * Backwards-compatible: still sets character.injured + injurySeverity.
+ */
+const INJURY_PRESETS = {
+  low:    { days: 2, mult: 0.90, label: "Bruise/strain" },
+  medium: { days: 4, mult: 0.75, label: "Sprain" },
+  severe: { days: 7, mult: 0.55, label: "Major injury" },
+};
+const AGGRAVATE_PROB = 0.35;
+
+export function injureCharacter(character, severity = "low") {
+  const preset = INJURY_PRESETS[severity] || INJURY_PRESETS.low;
+  character.injury = { severity, daysRemaining: preset.days };
+  // Back-compat flags:
   character.injured = true;
-  character.injurySeverity = level;  // "low", "medium", or "severe"
+  character.injurySeverity = severity;
   appendMessage(
-    `${character.name} suffered a ${level} injury and will compete at a disadvantage.`,
+    `${character.name} suffered a <em>${preset.label}</em> (${severity}) — ${preset.days} day(s) to heal.`,
     "injury-notice"
   );
 }
 export function isInjured(character) {
-  return character.injured === true;
+  // support both the new object and legacy boolean flag
+  return !!(character.injury && character.injury.daysRemaining > 0) || character.injured === true;
+}
+export function injuryPerfMult(character) {
+  if (!isInjured(character)) return 1.0;
+  const sev = (character.injury && character.injury.severity) || character.injurySeverity || "low";
+  const preset = INJURY_PRESETS[sev];
+  return preset ? preset.mult : 1.0;
+}
+export function healInjuryOneDay(character) {
+  if (!character.injury) return;
+  character.injury.daysRemaining = Math.max(0, (character.injury.daysRemaining || 0) - 1);
+  if (character.injury.daysRemaining === 0) {
+    const sev = character.injury.severity;
+    delete character.injury;
+    // Reset legacy flags
+    character.injured = false;
+    character.injurySeverity = undefined;
+    appendMessage(`${character.name}'s ${sev} injury has healed.`, "event-info");
+  }
+}
+function escalateSeverity(sev) {
+  if (sev === "low") return "medium";
+  if (sev === "medium") return "severe";
+  return "severe";
+}
+export function maybeAggravateInjury(character) {
+  if (!isInjured(character)) return;
+  if (Math.random() < AGGRAVATE_PROB) {
+    const prev = (character.injury && character.injury.severity) || character.injurySeverity || "low";
+    const next = escalateSeverity(prev);
+    const preset = INJURY_PRESETS[next];
+    // Ensure injury object exists
+    if (!character.injury) character.injury = { severity: next, daysRemaining: preset.days };
+    character.injury.severity = next;
+    character.injury.daysRemaining = Math.max(character.injury.daysRemaining + 1, preset.days);
+    character.injured = true; // legacy
+    character.injurySeverity = next;
+    appendMessage(`${character.name}'s injury <strong>worsens</strong> (${prev} → ${next}).`, "event-warning");
+  }
+}
+export function healAllInjuriesDaily(groups = []) {
+  const seen = new Set();
+  groups.forEach(arr => {
+    if (!Array.isArray(arr)) return;
+    arr.forEach(c => {
+      if (!c || seen.has(c)) return;
+      seen.add(c);
+      healInjuryOneDay(c);
+    });
+  });
 }
 
-/** ─── Relationship Setter ─────────────────────────────────────── */
+/** Day watcher: call startInjuryWatcher(simulationState) once on boot.
+ * It heals injuries when the day number increases.
+ */
+export function startInjuryWatcher(state) {
+  if (!state) return;
+  let lastDay = state.day || 0;
+  setInterval(() => {
+    const curDay = state.day || 0;
+    if (curDay !== lastDay) {
+      lastDay = curDay;
+      const groups = [];
+      if (Array.isArray(state.currentCharacters)) groups.push(state.currentCharacters);
+      if (Array.isArray(state.reserveCharacters)) groups.push(state.reserveCharacters);
+      if (Array.isArray(state.allCharacters)) groups.push(state.allCharacters);
+      healAllInjuriesDaily(groups);
+    }
+  }, 800);
+}
+
+/** ─── Relationship Setter (kept) ─────────────────────────────── */
 export function setRelationship(a, b, newVal) {
   const relAB = getRelationship(a, b);
   const oldVal = relAB.value;
@@ -88,15 +166,15 @@ export function setRelationship(a, b, newVal) {
     appendMessage(`${a.name} and ${b.name} have broken up.`, "relationship-end");
   }
 
+  // Exclusivity: if A↔B are Lovers, demote other lovers to ≤ Best Friend
   if (relAB.tier === REL_THRESHOLDS.LOVER.label) {
-    // enforce exclusivity
     const demoteOther = (subject, partner) => {
       const rels = window.relationships[subject.name];
       for (const other in rels) {
         if (other === partner.name) continue;
         const val = rels[other].value;
         if (val >= REL_THRESHOLDS.LOVER.min) {
-          rels[other].value = Math.max(val, REL_THRESHOLDS.BEST_FRIEND.min);
+          rels[other].value = Math.max(REL_THRESHOLDS.BEST_FRIEND.min, Math.min(val, REL_THRESHOLDS.BEST_FRIEND.min));
           rels[other].tier = getTierLabel(rels[other].value);
           rels[other].status = rels[other].tier;
           const back = getRelationship(
@@ -105,7 +183,7 @@ export function setRelationship(a, b, newVal) {
           );
           back.value = rels[other].value;
           back.tier = rels[other].tier;
-          back.status = relBA.tier;
+          back.status = rels[other].tier;
           appendMessage(
             `${subject.name} is now exclusive with ${partner.name}, so ${other} is no longer a lover.`,
             "relationship-demote"
@@ -118,7 +196,7 @@ export function setRelationship(a, b, newVal) {
   }
 }
 
-/** ─── Jealousy System & NPC Activities ─────────────────────────────────────────── */
+/** ─── Jealousy & NPC Activities (kept) ───────────────────────── */
 export function handleJealousy(actor, target) {
   const others = simulationState.currentCharacters.filter(
     c =>
@@ -150,20 +228,21 @@ export function simulateNPCActivities() {
   });
 }
 
-/** ─── Fight Proposal Evaluation ───────────────────────────────── */
+/** ─── Fight Proposal Evaluation (kept, now uses new injury) ──── */
 export function evaluateFightProposal(opponent, proposer) {
   const mental = opponent.mental_attributes;
   const rel = getRelationship(opponent, proposer).value;
   const baseChance = (mental.craziness + mental.dominance + rel) / 300;
+
   if (isInjured(opponent)) {
-    // injured disadvantage
-    const penalty = { low: 0.9, medium: 0.7, severe: 0.5 }[opponent.injurySeverity] || 1;
+    const sev = (opponent.injury && opponent.injury.severity) || opponent.injurySeverity || "low";
+    const penalty = { low: 0.9, medium: 0.7, severe: 0.5 }[sev] || 1;
     return Math.random() < baseChance * penalty;
   }
   return Math.random() < baseChance;
 }
 
-/** ─── NPC Suggestion System ───────────────────────────────────── */
+/** ─── NPC Suggestion System (kept) ───────────────────────────── */
 const suggestionPool = {
   morning: [
     {
@@ -380,12 +459,6 @@ const suggestionPool = {
   ]
 };
 
-/**
- * Maybe show an NPC suggestion at period start.
- * @param {"morning"|"noon"|"evening"} period
- * @param {Function} continueFn  callback to resume normal menu
- * @returns {boolean} true if a suggestion was shown
- */
 export function maybeTriggerNPCSuggestion(period, continueFn) {
   const pool = suggestionPool[period];
   if (!pool || Math.random() > 0.2) return false;
