@@ -15,6 +15,7 @@ import {
   trainingDialogues,
   interactionDialogues
 } from "./dialogues.js";
+import { REL_THRESHOLDS, getRelationship } from "./characters.js";
 
 export function displayAPMenu() {
   const outputDiv = document.getElementById("game-output");
@@ -141,8 +142,8 @@ export function displayTrainMenu() {
         const pPrev = partner.fighting_attributes[trainingType] || 0;
         partner.fighting_attributes[trainingType] = Math.min(100, pPrev + 1);
         appendMessage(`${partnerName} also improved ${trainingType} by 1.`, "action-feedback");
-        window.getRelationship(simulationState.playerCharacter, partner).value += 1;
-        window.getRelationship(partner, simulationState.playerCharacter).value += 1;
+        getRelationship(simulationState.playerCharacter, partner).value += 1;
+        getRelationship(partner, simulationState.playerCharacter).value += 1;
       } else {
         appendMessage(`${partnerName} did not benefit this time.`, "action-feedback");
       }
@@ -157,6 +158,15 @@ export function displayTrainMenu() {
     }
   };
   container.appendChild(confirm);
+
+  const backBtn = document.createElement("button");
+  backBtn.className = "modern-btn";
+  backBtn.innerText = "Back";
+  backBtn.onclick = () => {
+    removeMenu("trainMenu");
+    displayAPMenu();
+  };
+  container.appendChild(backBtn);
 
   outputDiv.appendChild(container);
 }
@@ -174,21 +184,26 @@ export function displayInteractMenu() {
 
   simulationState.currentCharacters.forEach(c => {
     if (c.name === simulationState.playerCharacter.name) return;
-    const imgBtn = document.createElement("img");
-    imgBtn.src = characterPics[c.name.toLowerCase()] || "";
-    imgBtn.alt = c.name;
-    imgBtn.className = "character-thumb";
-    imgBtn.onclick = () => {
-      targetGrid.querySelectorAll("img").forEach(i => i.classList.remove("selected"));
-      imgBtn.classList.add("selected");
+    const card = document.createElement("div");
+    card.className = "grid-item";
+    const img = document.createElement("img");
+    img.src = characterPics[c.name.toLowerCase()] || "placeholder.png";
+    img.alt = c.name;
+    img.className = "character-img";
+
+    const span = document.createElement("span");
+    span.innerText = c.name;
+
+    card.onclick = () => {
       selectedTarget = c.name;
+      [...targetGrid.children].forEach(ch => ch.classList.remove("selected"));
+      card.classList.add("selected");
     };
-    if (selectedTarget === null) {
-      selectedTarget = c.name;
-      imgBtn.classList.add("selected");
-    }
-    targetGrid.appendChild(imgBtn);
+
+    card.append(img, span);
+    targetGrid.appendChild(card);
   });
+
   interactDiv.appendChild(targetGrid);
 
   const actionLabel = document.createElement("label");
@@ -248,6 +263,7 @@ export function displayInteractMenu() {
     }
     simulationState.playerAP -= cost;
 
+    // Flavor line
     const key = actionSelect.value
       .toLowerCase()
       .replace(/ /g, "")
@@ -265,14 +281,14 @@ export function displayInteractMenu() {
     switch (actionSelect.value) {
       case "Talk": {
         const d1 = getRandomInt(1,5), d2 = getRandomInt(1,5);
-        window.getRelationship(simulationState.playerCharacter, target).value += d1;
-        window.getRelationship(target, simulationState.playerCharacter).value += d2;
+        getRelationship(simulationState.playerCharacter, target).value += d1;
+        getRelationship(target, simulationState.playerCharacter).value += d2;
         outcomeText = `You had a pleasant conversation (+${d1} you, +${d2} them).`;
         break;
       }
       case "Gossip": {
         const delta = getRandomInt(1,4);
-        window.getRelationship(simulationState.playerCharacter, target).value -= delta;
+        getRelationship(simulationState.playerCharacter, target).value -= delta;
         outcomeText = `You gossiped (-${delta}).`;
         break;
       }
@@ -283,20 +299,20 @@ export function displayInteractMenu() {
             ? `Fight done. Winner: ${res.winner.name}`
             : "Fight failed.";
         } else {
-          window.getRelationship(simulationState.playerCharacter, target).value -= 3;
+          getRelationship(simulationState.playerCharacter, target).value -= 3;
           outcomeText = "Fight proposal rejected (-3).";
         }
         break;
       }
       case "Insult": {
         const amt = getRandomInt(2,6);
-        window.getRelationship(simulationState.playerCharacter, target).value -= amt;
+        getRelationship(simulationState.playerCharacter, target).value -= amt;
         outcomeText = `You insulted them (-${amt}).`;
         break;
       }
       case "Sabotage": {
         if (Math.random() < 0.5) {
-          window.getRelationship(simulationState.playerCharacter, target).value -= 5;
+          getRelationship(simulationState.playerCharacter, target).value -= 5;
           outcomeText = "Sabotage successful (-5 relation, damage inflicted).";
         } else {
           outcomeText = "Sabotage failed (backlash).";
@@ -305,14 +321,49 @@ export function displayInteractMenu() {
       }
       case "Compliment": {
         const c1 = getRandomInt(1,5), c2 = getRandomInt(1,5);
-        window.getRelationship(simulationState.playerCharacter, target).value += c1;
-        window.getRelationship(target, simulationState.playerCharacter).value += c2;
+        getRelationship(simulationState.playerCharacter, target).value += c1;
+        getRelationship(target, simulationState.playerCharacter).value += c2;
         outcomeText = `You complimented (+${c1} you, +${c2} them).`;
         break;
       }
       case "Have Sex": {
-        window.getRelationship(simulationState.playerCharacter, target).value += 7;
-        outcomeText = "Intimate encounter (+7).";
+        const relVal = getRelationship(simulationState.playerCharacter, target).value;
+        let successP = 0;
+        let deltaMin = 0, deltaMax = 0;
+        let rejectionHit = -2;
+
+        if (relVal < REL_THRESHOLDS.FRIEND.min) {
+          successP = 0.10;
+          deltaMin = 3; deltaMax = 6;
+          rejectionHit = -3;
+        } else if (relVal < REL_THRESHOLDS.BEST_FRIEND.min) {
+          successP = 0.45;
+          deltaMin = 5; deltaMax = 9;
+          rejectionHit = -2;
+        } else if (relVal < REL_THRESHOLDS.LOVER.min) {
+          successP = 0.70;
+          deltaMin = 6; deltaMax = 12;
+          rejectionHit = -1;
+        } else {
+          successP = 0.90;
+          deltaMin = 7; deltaMax = 13;
+          rejectionHit = 0; // lovers rarely take offense
+        }
+
+        if (Math.random() < successP) {
+          const gain = getRandomInt(deltaMin, deltaMax);
+          getRelationship(simulationState.playerCharacter, target).value =
+            Math.min(100, relVal + gain);
+          getRelationship(target, simulationState.playerCharacter).value =
+            Math.min(100, relVal + gain);
+          outcomeText = `Intimate encounter succeeds (+${gain} to mutual relationship).`;
+        } else {
+          getRelationship(simulationState.playerCharacter, target).value =
+            Math.max(0, relVal + rejectionHit);
+          getRelationship(target, simulationState.playerCharacter).value =
+            Math.max(0, relVal + Math.min(0, rejectionHit + 1));
+          outcomeText = `They weren’t ready. Awkward moment (${rejectionHit}).`;
+        }
         break;
       }
       default:
@@ -329,6 +380,15 @@ export function displayInteractMenu() {
   };
   interactDiv.appendChild(confirmBtn);
 
+  const backBtn = document.createElement("button");
+  backBtn.className = "modern-btn";
+  backBtn.innerText = "Back";
+  backBtn.onclick = () => {
+    removeMenu("interactMenu");
+    displayAPMenu();
+  };
+  interactDiv.appendChild(backBtn);
+
   outputDiv.appendChild(interactDiv);
 }
 
@@ -338,16 +398,6 @@ export function displayViewInfo() {
   const container = document.createElement("div");
   container.id = "infoContainer";
   container.className = "modern-container split-container";
-
-  const leftPanel = document.createElement("div");
-  leftPanel.className = "info-panel left-panel";
-  leftPanel.innerHTML = "<h4>Championships</h4>";
-  simulationState.currentCharacters.forEach(c => {
-    const p = document.createElement("p");
-    p.innerText = `${c.name}: ${c.championships}`;
-    leftPanel.appendChild(p);
-  });
-  container.appendChild(leftPanel);
 
   const rightPanel = document.createElement("div");
   rightPanel.className = "info-panel right-panel";
@@ -378,7 +428,7 @@ export function displayViewInfo() {
 
   function renderDetails(index) {
     const c = simulationState.currentCharacters[index];
-    img.src = characterPics[c.name.toLowerCase()] || "";
+    img.src = characterPics[c.name.toLowerCase()] || "placeholder.png";
     img.alt = c.name;
 
     let html = `<h5>${c.name}</h5>`;
@@ -389,7 +439,7 @@ export function displayViewInfo() {
     html += "<h6>Relationships:</h6>";
     simulationState.currentCharacters.forEach(other => {
       if (other.name === c.name) return;
-      const rel = window.getRelationship(c, other);
+      const rel = getRelationship(c, other);
       html += `<p>${other.name}: ${rel.value} (${rel.status})</p>`;
     });
 
