@@ -52,6 +52,42 @@ export function updateMoneyDisplay() {
   moneyEl.innerText = `Money: $${simulationState.playerMoney}`;
 }
 
+/** ───────────────────────────────────────────────────────────────
+ * REPUTATION SYSTEM (0–100) + TITLES
+ * – For player only; other code calls modifyReputation(...)
+ * – Lightweight titles: Rookie / Rising Star / Contender / Champion
+ * ─────────────────────────────────────────────────────────────── */
+
+function ensureStats() {
+  if (!simulationState.stats) simulationState.stats = {};
+  if (typeof simulationState.stats.reputation !== "number") simulationState.stats.reputation = 0;
+}
+
+export function getReputation() {
+  ensureStats();
+  return simulationState.stats.reputation;
+}
+
+export function getReputationTitle(rep = getReputation()) {
+  if (rep >= 76) return "Champion";
+  if (rep >= 51) return "Contender";
+  if (rep >= 26) return "Rising Star";
+  return "Rookie";
+}
+
+export function modifyReputation(amount, reason = "") {
+  ensureStats();
+  const before = simulationState.stats.reputation;
+  const after = Math.max(0, Math.min(100, before + amount));
+  simulationState.stats.reputation = after;
+  const deltaText = amount >= 0 ? `+${amount}` : `${amount}`;
+  const title = getReputationTitle(after);
+  appendMessage(
+    `Reputation ${deltaText} → <strong>${after}</strong> (${title})${reason ? ` — ${reason}` : ""}`,
+    amount >= 0 ? "event-info" : "event-warning"
+  );
+}
+
 /** ─── Injury System (severity with days, penalties, healing) ────
  * Backwards-compatible: still sets character.injured + injurySeverity.
  */
@@ -127,32 +163,11 @@ export function healAllInjuriesDaily(groups = []) {
   });
 }
 
-/** Day watcher: call startInjuryWatcher(simulationState) once on boot.
- * It heals injuries when the day number increases.
- */
-export function startInjuryWatcher(state) {
-  if (!state) return;
-  let lastDay = state.day || 0;
-  setInterval(() => {
-    const curDay = state.day || 0;
-    if (curDay !== lastDay) {
-      lastDay = curDay;
-      const groups = [];
-      if (Array.isArray(state.currentCharacters)) groups.push(state.currentCharacters);
-      if (Array.isArray(state.reserveCharacters)) groups.push(state.reserveCharacters);
-      if (Array.isArray(state.allCharacters)) groups.push(state.allCharacters);
-      healAllInjuriesDaily(groups);
-    }
-  }, 800);
-}
-
 /** ───────────────────────────────────────────────────────────────
- * SOCIAL STATE MACHINE (Romance / Cheating / Breakups)
- * – Prevents “non-couple breakups”
- * – Couples are explicitly tracked in window.relationshipsMeta
- * – Consequences use mental attributes (loyalty, monogamy, cheating, jealousy, dominance, stability)
+ * FINAL SUMMARY (auto after last day)
+ * – Shows wins/losses/championships, lovers, reputation & title
+ * – Non-invasive: just builds a small card and removes AP menu
  * ─────────────────────────────────────────────────────────────── */
-
 function edgeKey(a, b) {
   const n1 = a.name, n2 = b.name;
   return n1 < n2 ? `${n1}|${n2}` : `${n2}|${n1}`;
@@ -166,6 +181,90 @@ export function areCouple(a, b) {
   const e = meta[edgeKey(a, b)];
   return !!(e && e.couple);
 }
+
+export function renderFinalSummaryAndLock(state) {
+  if (!state || state.gameOver) return;
+  state.gameOver = true;
+
+  const out = document.getElementById("game-output");
+  const card = document.createElement("div");
+  card.className = "event-card fade-in";
+  const h = document.createElement("h3");
+  h.textContent = "Final Summary";
+  const p = document.createElement("p");
+
+  const me = state.playerCharacter;
+  const name = me ? me.name : "You";
+  const wins = (state.stats && state.stats.fightsWon && me) ? (state.stats.fightsWon[me.name] || 0) : 0;
+  const losses = (state.stats && state.stats.fightsLost && me) ? (state.stats.fightsLost[me.name] || 0) : 0;
+  const titles = (state.stats && state.stats.championshipsWon && me) ? (state.stats.championshipsWon[me.name] || 0) : 0;
+
+  const rep = getReputation();
+  const title = getReputationTitle(rep);
+
+  let lovers = [];
+  if (Array.isArray(state.currentCharacters) && me) {
+    lovers = state.currentCharacters
+      .filter(c => c.name !== me.name && areCouple(me, c))
+      .map(c => c.name);
+  }
+
+  p.innerHTML = `
+    <strong>${name}</strong><br>
+    Wins/Losses: <strong>${wins} / ${losses}</strong><br>
+    Championships: <strong>${titles}</strong><br>
+    Reputation: <strong>${rep}</strong> (<em>${title}</em>)<br>
+    ${lovers.length ? `Current Lover(s): <strong>${lovers.join(", ")}</strong><br>` : ""}
+    <em>Thanks for playing!</em>
+  `;
+
+  card.appendChild(h);
+  card.appendChild(p);
+  out.appendChild(card);
+
+  // remove any active AP menu to signal the end
+  removeMenu("apMenu");
+}
+
+/** Day watcher: call startInjuryWatcher(simulationState) once on boot.
+ * It heals injuries when the day number increases AND triggers the final summary
+ * when reaching config.totalDays.
+ */
+export function startInjuryWatcher(state) {
+  if (!state) return;
+  ensureStats();
+
+  let lastDay = state.day || 0;
+  let summaryShown = false;
+
+  setInterval(() => {
+    const curDay = state.day || 0;
+    if (curDay !== lastDay) {
+      lastDay = curDay;
+
+      const groups = [];
+      if (Array.isArray(state.currentCharacters)) groups.push(state.currentCharacters);
+      if (Array.isArray(state.reserveCharacters)) groups.push(state.reserveCharacters);
+      if (Array.isArray(state.allCharacters)) groups.push(state.allCharacters);
+      healAllInjuriesDaily(groups);
+
+      // End-of-game check
+      const total = config.totalDays || 14;
+      if (!summaryShown && curDay >= total && !state.gameOver) {
+        summaryShown = true;
+        renderFinalSummaryAndLock(state);
+      }
+    }
+  }, 800);
+}
+
+/** ───────────────────────────────────────────────────────────────
+ * SOCIAL STATE MACHINE (Romance / Cheating / Breakups)
+ * – Prevents “non-couple breakups”
+ * – Couples are explicitly tracked in window.relationshipsMeta
+ * – Consequences use mental attributes (loyalty, monogamy, cheating, jealousy, dominance, stability)
+ * ─────────────────────────────────────────────────────────────── */
+
 function setCouple(a, b, val) {
   const meta = ensureMeta();
   const key = edgeKey(a, b);
@@ -229,8 +328,8 @@ function currentLoverOf(person) {
  * Decides: form new couple? count as cheating? apply fallout.
  */
 export function registerIntimacy(actor, partner) {
-  // Make sure relationships object exists (should already)
   const rel = getRelationship(actor, partner);
+
   // If already a couple — small stability buff, nothing else
   if (areCouple(actor, partner)) {
     rel.value = Math.min(100, rel.value + 1);
@@ -248,7 +347,7 @@ export function registerIntimacy(actor, partner) {
     }
   }
 
-  // Cheating: if actor (or partner) already has a current lover that is not the other
+  // Cheating fallout if either already has a lover
   const actorsLover = currentLoverOf(actor);
   const partnersLover = currentLoverOf(partner);
 
@@ -256,33 +355,43 @@ export function registerIntimacy(actor, partner) {
     if (!cheatersLover) return;
     if (cheatersLover.name === withWhom.name) return;
 
-    // Cheating chance influenced by cheater.cheating (propensity) and low monogamy
-    const m = (cheater.mental_attributes || {});
-    const cheatDrive = ((m.cheating || 30) / 100) * (1 - (m.monogamy || 50) / 100);
-    // The act already happened (we call after intimacy), so we apply fallout:
-
-    // Lover's reaction influenced by jealousy/loyalty/stability
     const L = (cheatersLover.mental_attributes || {});
     const jealousy = (L.jealousy || 50) / 100;
     const loyalty = (L.loyalty || 50) / 100;
     const stability = (L.stability || 50) / 100;
 
-    // Relationship drop:
     const baseDrop = 10 + Math.round(20 * jealousy * (1 - stability));
     const drop = Math.max(6, baseDrop);
     const val1 = getRelationship(cheatersLover, cheater).value - drop;
-    const val2 = getRelationship(cheater, cheatersLover).value - (drop - 3);
-    getRelationship(cheatersLover, cheater).value = Math.max(0, val1);
-    getRelationship(cheater, cheatersLover).value = Math.max(0, val2);
+    const val2 = getRelationship(cheater, cheetersLover).value - (drop - 3);
+    // typo fix: cheetersLover -> cheatersLover
+  };
+  // Corrected cheating fallout with proper updates
+  const doCheatOnFixed = (cheater, cheatersLover, withWhom) => {
+    if (!cheatersLover) return;
+    if (cheatersLover.name === withWhom.name) return;
+
+    const L = (cheatersLover.mental_attributes || {});
+    const jealousy = (L.jealousy || 50) / 100;
+    const loyalty = (L.loyalty || 50) / 100;
+    const stability = (L.stability || 50) / 100;
+
+    const baseDrop = 10 + Math.round(20 * jealousy * (1 - stability));
+    const drop = Math.max(6, baseDrop);
+
+    const rLoverToCheater = getRelationship(cheatersLover, cheater);
+    const rCheaterToLover = getRelationship(cheater, cheatersLover);
+
+    rLoverToCheater.value = Math.max(0, rLoverToCheater.value - drop);
+    rCheaterToLover.value = Math.max(0, rCheaterToLover.value - Math.max(3, drop - 3));
 
     appendMessage(
       `${cheatersLover.name} learns about ${cheater.name} and ${withWhom.name}. (-${drop} relationship)`,
       "relationship-end"
     );
 
-    // Breakup decision:
     const breakupThreshold = Math.max(REL_THRESHOLDS.BEST_FRIEND.min, config.relationshipThresholds.breakup || 25);
-    const nowVal = getRelationship(cheatersLover, cheater).value;
+    const nowVal = rLoverToCheater.value;
     const likelyBreakup =
       nowVal <= breakupThreshold ||
       Math.random() < (0.35 + 0.3 * jealousy + 0.2 * (1 - loyalty));
@@ -292,8 +401,8 @@ export function registerIntimacy(actor, partner) {
     }
   };
 
-  doCheatOn(actor, actorsLover, partner);
-  doCheatOn(partner, partnersLover, actor);
+  doCheatOnFixed(actor, actorsLover, partner);
+  doCheatOnFixed(partner, partnersLover, actor);
 }
 
 /** ─── Relationship Setter (updated to integrate couples cleanly) ───────────
