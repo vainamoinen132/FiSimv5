@@ -9,7 +9,8 @@ import {
   evaluateFightProposal,
   updateMoneyDisplay,
   isInjured,
-  registerIntimacy
+  registerIntimacy, // social logic hook from earlier step (if present in your build)
+  modifyReputation   // NEW: small social rep nudges (player-only)
 } from "./utilities.js";
 import { characterPics } from "./characterManager.js";
 import { fight } from "./combat.js";
@@ -132,6 +133,8 @@ export function displayTrainMenu() {
     if (!partnerName) {
       appendMessage(`You trained ${trainingType} alone.`, "action-feedback");
       appendMessage(resultText, "action-feedback");
+      // small rep bump for disciplined solo training
+      if (delta > 0) modifyReputation(+1, "Consistent training");
     } else {
       const withLine = trainingDialogues.withPartner[
         Math.floor(Math.random() * trainingDialogues.withPartner.length)
@@ -150,6 +153,7 @@ export function displayTrainMenu() {
         appendMessage(`${partnerName} did not benefit this time.`, "action-feedback");
       }
       appendMessage(resultText, "action-feedback");
+      if (delta > 0) modifyReputation(+1, "Visible work ethic");
     }
 
     removeMenu("trainMenu");
@@ -304,12 +308,14 @@ export function displayInteractMenu() {
         getRelationship(simulationState.playerCharacter, target).value += d1;
         getRelationship(target, simulationState.playerCharacter).value += d2;
         outcomeText = `You had a pleasant conversation (+${d1} you, +${d2} them).`;
+        modifyReputation(+1, "Positive social presence");
         break;
       }
       case "Gossip": {
         const delta = getRandomInt(1,4);
         getRelationship(simulationState.playerCharacter, target).value -= delta;
         outcomeText = `You gossiped (-${delta}).`;
+        modifyReputation(-1, "Petty gossip");
         break;
       }
       case "Propose to Fight": {
@@ -332,6 +338,7 @@ export function displayInteractMenu() {
         } else {
           getRelationship(simulationState.playerCharacter, target).value -= 3;
           outcomeText = "Fight proposal rejected (-3).";
+          modifyReputation(-1, "Challenge rejected");
         }
         break;
       }
@@ -339,14 +346,17 @@ export function displayInteractMenu() {
         const amt = getRandomInt(2,6);
         getRelationship(simulationState.playerCharacter, target).value -= amt;
         outcomeText = `You insulted them (-${amt}).`;
+        modifyReputation(-2, "Poor sportsmanship");
         break;
       }
       case "Sabotage": {
         if (Math.random() < 0.5) {
           getRelationship(simulationState.playerCharacter, target).value -= 5;
           outcomeText = "Sabotage successful (-5 relation, damage inflicted).";
+          modifyReputation(-3, "Dirty tactics");
         } else {
           outcomeText = "Sabotage failed (backlash).";
+          modifyReputation(-1, "Sabotage attempt");
         }
         break;
       }
@@ -355,6 +365,7 @@ export function displayInteractMenu() {
         getRelationship(simulationState.playerCharacter, target).value += c1;
         getRelationship(target, simulationState.playerCharacter).value += c2;
         outcomeText = `You complimented (+${c1} you, +${c2} them).`;
+        modifyReputation(+2, "Sportsmanship");
         break;
       }
       case "Have Sex": {
@@ -381,15 +392,20 @@ export function displayInteractMenu() {
             Math.min(100, relVal + gain);
           outcomeText = `Intimate encounter succeeds (+${gain} to mutual relationship).`;
 
-          // ⬇️ NEW: register intimacy for romance/cheating logic
-          registerIntimacy(simulationState.playerCharacter, target);
+          // If you kept registerIntimacy from earlier step, this will
+          // handle couple/cheating logic. If not present, it safely does nothing.
+          if (typeof registerIntimacy === "function") {
+            registerIntimacy(simulationState.playerCharacter, target);
+          }
 
+          modifyReputation(+1, "Public perception of chemistry");
         } else {
           getRelationship(simulationState.playerCharacter, target).value =
             Math.max(0, relVal + rejectionHit);
           getRelationship(target, simulationState.playerCharacter).value =
             Math.max(0, relVal + Math.min(0, rejectionHit + 1));
           outcomeText = `They weren’t ready. Awkward moment (${rejectionHit}).`;
+          modifyReputation(-1, "Awkward moment");
         }
         break;
       }
