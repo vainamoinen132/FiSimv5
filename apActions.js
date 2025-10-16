@@ -8,7 +8,8 @@ import {
   clearOutput,
   evaluateFightProposal,
   updateMoneyDisplay,
-  isInjured
+  isInjured,
+  registerIntimacy
 } from "./utilities.js";
 import { characterPics } from "./characterManager.js";
 import { fight } from "./combat.js";
@@ -312,7 +313,7 @@ export function displayInteractMenu() {
         break;
       }
       case "Propose to Fight": {
-        // NEW: warn if either is injured
+        // Warn if injured
         const meInj  = isInjured(simulationState.playerCharacter);
         const themInj= isInjured(target);
         if (meInj || themInj) {
@@ -379,6 +380,10 @@ export function displayInteractMenu() {
           getRelationship(target, simulationState.playerCharacter).value =
             Math.min(100, relVal + gain);
           outcomeText = `Intimate encounter succeeds (+${gain} to mutual relationship).`;
+
+          // ⬇️ NEW: register intimacy for romance/cheating logic
+          registerIntimacy(simulationState.playerCharacter, target);
+
         } else {
           getRelationship(simulationState.playerCharacter, target).value =
             Math.max(0, relVal + rejectionHit);
@@ -458,7 +463,6 @@ export function displayViewInfo() {
       html += `<p>${attr}: ${val}</p>`;
     });
 
-    // Show injury if any
     if (c.injury && c.injury.daysRemaining > 0) {
       html += `<p><strong>Injury:</strong> ${c.injury.severity}, ${c.injury.daysRemaining} day(s) remaining.</p>`;
     }
