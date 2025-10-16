@@ -1,28 +1,28 @@
 // combat.js
 
 import { fightingStyles, getRelationship } from "./characters.js";
-import { appendMessage } from "./utilities.js";
+import { appendMessage, getRandomInt } from "./utilities.js";
+import { injureCharacter } from "./utilities.js";
 
 /**
  * Executes a fight between two characters using the specified style.
- * Loser has a 10% chance to sustain an injury.
+ * Loser has a ~10% chance to sustain a (low/medium) injury.
  */
 export function fight(character1, character2, fightingStyleName) {
-  // Retrieve the fighting style
   const style = fightingStyles[fightingStyleName];
   if (!style) {
-    alert("Invalid fighting style: " + fightingStyleName);
+    appendMessage(`Error: invalid fighting style <em>${fightingStyleName}</em>.`, "error-message");
     return null;
   }
 
-  // Calculate a weighted score for a character based on the fighting style
+  // Weighted score based on style mapping
   function calculateScore(character) {
     let score = 0;
     for (const attr in style) {
       const val = character.fighting_attributes[attr] || 0;
       score += val * style[attr];
     }
-    // Add randomness
+    // light randomness
     score += Math.random() * 10;
     return score;
   }
@@ -30,27 +30,24 @@ export function fight(character1, character2, fightingStyleName) {
   const score1 = calculateScore(character1);
   const score2 = calculateScore(character2);
 
-  // Determine winner/loser
   const winner = score1 >= score2 ? character1 : character2;
   const loser  = winner === character1 ? character2 : character1;
 
-  // Update win/loss records
-  const relWin = getRelationship(winner, loser);
-  relWin.wins = (relWin.wins || 0) + 1;
+  // Update head-to-head mini record stored on relationship edges
+  const relWin  = getRelationship(winner, loser);
   const relLose = getRelationship(loser, winner);
-  relLose.losses = (relLose.losses || 0) + 1;
+  relWin.wins   = (relWin.wins   || 0) + 1;
+  relLose.losses= (relLose.losses|| 0) + 1;
 
-  alert(
-    `${winner.name} wins the fight against ${loser.name} using ${fightingStyleName} style!`
+  appendMessage(
+    `<strong>${winner.name}</strong> defeats ${loser.name} using <em>${fightingStyleName}</em>.`,
+    "match-info"
   );
 
-  // 10% chance loser gets injured
+  // ~10% injury chance on loser; use utility (severity → disadvantage, not bench)
   if (Math.random() < 0.10) {
-    loser.injured = true;
-    appendMessage(
-      `${loser.name} got injured during the fight and will be unable to compete until healed.`,
-      "injury-announcement"
-    );
+    const sev = Math.random() < 0.7 ? "low" : "medium";
+    injureCharacter(loser, sev);
   }
 
   return { winner, loser };
