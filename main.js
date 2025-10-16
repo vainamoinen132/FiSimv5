@@ -7,10 +7,7 @@ import { characters, initializeRelationships } from "./characters.js";
 import { startInteractiveSimulation, simulationState } from "./simulationCore.js";
 import { characterPics } from "./characterManager.js";
 import { config } from "./config.js";
-
-// ⬇️ NEW: lightweight tooling (does not change your flow)
-import { injectSaveUI } from "./saveManager.js";
-import { setupHUD } from "./devHud.js";
+import { startInjuryWatcher } from "./utilities.js"; // NEW
 
 document.addEventListener("DOMContentLoaded", () => {
   // Sidebar buttons
@@ -39,18 +36,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const durationSelect      = document.getElementById("durationSelect");
   const eliminationSelect   = document.getElementById("eliminationSelect");
 
-  // --------------- New: tiny helpers on boot ---------------
-  // Adds Save / Load / New Game buttons under header (non-intrusive)
-  injectSaveUI();
-  // Toggle HUD with the "~" key to see Day/Period/AP while testing
-  setupHUD();
-
-  // Sanity check
-  console.log({
-    startGameMain, setupSection, selectionStage,
-    playerStage, characterSelection, playerSelection,
-    nextAfterSelection, startGameButton
-  });
+  // Start injury day watcher (heals injuries when day increments)
+  startInjuryWatcher(simulationState);
 
   // --------------- Start Game click ---------------
   startGameMain.addEventListener("click", () => {
@@ -138,7 +125,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --------------- Game Options ---------------
   gameOptionsBtn.addEventListener("click", () => {
-    // initialize selects from current config
     durationSelect.value    = config.totalDays;
     eliminationSelect.value = config.eliminationInterval;
     gameOptionsModal.classList.remove("hidden");
@@ -147,7 +133,6 @@ document.addEventListener("DOMContentLoaded", () => {
     gameOptionsModal.classList.add("hidden");
   });
   saveOptionsBtn.addEventListener("click", () => {
-    // apply user choices
     config.totalDays           = parseInt(durationSelect.value,    10);
     config.eliminationInterval = parseInt(eliminationSelect.value, 10);
     gameOptionsModal.classList.add("hidden");
@@ -155,7 +140,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --------------- Leaderboard ---------------
   leaderboardBtn.addEventListener("click", () => {
-    // sort by number of championships won
     const sorted = [...characters].sort((a, b) =>
       (simulationState.stats.championshipsWon[b.name] || 0) -
       (simulationState.stats.championshipsWon[a.name] || 0)
