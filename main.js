@@ -8,6 +8,10 @@ import { startInteractiveSimulation, simulationState } from "./simulationCore.js
 import { characterPics } from "./characterManager.js";
 import { config } from "./config.js";
 
+// ⬇️ NEW: lightweight tooling (does not change your flow)
+import { injectSaveUI } from "./saveManager.js";
+import { setupHUD } from "./devHud.js";
+
 document.addEventListener("DOMContentLoaded", () => {
   // Sidebar buttons
   const startGameMain       = document.getElementById("startGameMain");
@@ -34,6 +38,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Options controls
   const durationSelect      = document.getElementById("durationSelect");
   const eliminationSelect   = document.getElementById("eliminationSelect");
+
+  // --------------- New: tiny helpers on boot ---------------
+  // Adds Save / Load / New Game buttons under header (non-intrusive)
+  injectSaveUI();
+  // Toggle HUD with the "~" key to see Day/Period/AP while testing
+  setupHUD();
 
   // Sanity check
   console.log({
