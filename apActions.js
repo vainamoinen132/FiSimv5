@@ -178,34 +178,56 @@ export function displayInteractMenu() {
   interactDiv.className = "modern-container";
 
   let selectedTarget = null;
+
+  // Build grid
   const targetGrid = document.createElement("div");
   targetGrid.id = "targetGrid";
   targetGrid.className = "character-grid";
 
   simulationState.currentCharacters.forEach(c => {
     if (c.name === simulationState.playerCharacter.name) return;
+
     const card = document.createElement("div");
     card.className = "grid-item";
+    card.setAttribute("role", "button");
+    card.setAttribute("tabindex", "0");
+    card.dataset.name = c.name;
+
     const img = document.createElement("img");
-    img.src = characterPics[c.name.toLowerCase()] || "placeholder.png";
+    img.src = characterPics[c.name.toLowerCase()] || "assets/characters/placeholder.png";
     img.alt = c.name;
     img.className = "character-img";
 
     const span = document.createElement("span");
     span.innerText = c.name;
 
-    card.onclick = () => {
-      selectedTarget = c.name;
-      [...targetGrid.children].forEach(ch => ch.classList.remove("selected"));
-      card.classList.add("selected");
-    };
-
     card.append(img, span);
     targetGrid.appendChild(card);
   });
 
+  // Robust event delegation — click anywhere inside the card
+  targetGrid.addEventListener("click", (e) => {
+    const card = e.target.closest(".grid-item");
+    if (!card) return;
+    selectedTarget = card.dataset.name;
+    [...targetGrid.children].forEach(ch => ch.classList.remove("selected"));
+    card.classList.add("selected");
+  });
+
+  // Keyboard support
+  targetGrid.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const card = e.target.closest(".grid-item");
+    if (!card) return;
+    e.preventDefault();
+    selectedTarget = card.dataset.name;
+    [...targetGrid.children].forEach(ch => ch.classList.remove("selected"));
+    card.classList.add("selected");
+  });
+
   interactDiv.appendChild(targetGrid);
 
+  // Action picker
   const actionLabel = document.createElement("label");
   actionLabel.innerText = "Choose action:";
   interactDiv.appendChild(actionLabel);
@@ -229,6 +251,7 @@ export function displayInteractMenu() {
   });
   interactDiv.appendChild(actionSelect);
 
+  // Style selector shown only for fight proposals
   const styleSelect = document.createElement("select");
   styleSelect.id = "fightingStyleSelect";
   Object.keys(window.fightingStyles).forEach(style => {
@@ -253,7 +276,7 @@ export function displayInteractMenu() {
   confirmBtn.innerText = "Execute Interaction";
   confirmBtn.onclick = () => {
     if (!selectedTarget) {
-      alert("Select someone to interact with.");
+      alert("Select someone to interact with (click a portrait).");
       return;
     }
     const cost = parseInt(actionSelect.selectedOptions[0].getAttribute("data-cost"), 10);
@@ -347,7 +370,7 @@ export function displayInteractMenu() {
         } else {
           successP = 0.90;
           deltaMin = 7; deltaMax = 13;
-          rejectionHit = 0; // lovers rarely take offense
+          rejectionHit = 0;
         }
 
         if (Math.random() < successP) {
@@ -428,7 +451,7 @@ export function displayViewInfo() {
 
   function renderDetails(index) {
     const c = simulationState.currentCharacters[index];
-    img.src = characterPics[c.name.toLowerCase()] || "placeholder.png";
+    img.src = characterPics[c.name.toLowerCase()] || "assets/characters/placeholder.png";
     img.alt = c.name;
 
     let html = `<h5>${c.name}</h5>`;
